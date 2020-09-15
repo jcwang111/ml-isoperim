@@ -115,8 +115,8 @@ def grad_krr(r, model):
         r: input vector
         model: trained KRR model with RBF kernel'''
     X = model.X_fit_
-    alpha = model.dual_coefs_
-    gamma =  model.get_params['gamma']
+    alpha = model.dual_coef_
+    gamma =  model.get_params()['gamma']
     K = rbf_kernel(r.reshape(1,-1), X, gamma)
     
     result = np.zeros(r.shape)
@@ -155,6 +155,37 @@ def grad_penalty_krr_fourier(r, model, p, area_func, A_0=1):
     '''Gradient of penalty_func() with respect to r.'''
     return grad_krr(r, model) + 2*p*(area_func(r)-A_0)*grad_area_fourier(r,model)
 
+def perform_gradient_descent(init_guess, cost, cost_grad, n, args, eps=1.0, produce_graph=False):
+    '''Implements a naive gradient descent on the cost function.
+    Args:
+        init_guess: initial guess for the vector r
+        cost: cost function to be minimized
+        cost_grad: gradient of the cost function with respect to r
+        n: number of times to iterate
+        args: tuple of extra arguments, beyond r, for cost and cost_grad
+        eps: parameter, size of each step
+        produce_graph: whether or not to produce a graph of the cost function over every iteration
+    Returns:
+        result: vector, same shape as init_guess'''
+    
+    result = init_guess
+    if produce_graph:
+        iterations = np.zeros(n)
+    
+    for i in range(n):
+        result -= eps * cost_grad(result, *args)
+        if produce_graph:
+            iterations[i] = cost(result, *args)
+
+    if produce_graph:
+        plt.plot(iterations)
+        plt.xlabel('Iteration number')
+        plt.ylabel('Cost')
+        plt.legend()
+        plt.show()
+    
+    return result
+
 if __name__ == '__main__':
     scipy.special.seterr(all='raise')
 
@@ -170,14 +201,13 @@ if __name__ == '__main__':
 
     weight = return_ellipse(2, 5)
     for (i, (a, b)) in enumerate(itertools.product(param_list, param_list)):
-        print(i, a, b)
         r_func = return_ellipse(a, b)
         r_func_d1 = return_ellipse_d1(a, b)
         X[i,:] = generate_data(r_func, n=21, feature='fourier')
         y[i] = perim(r_func, r_func_d1, weight)
 
     alpha_values = [0, 10E-3, 10E-2, 10E-1, 1, 10, 100, 1000]
-    gamma_values = [10E-3, 10E-2, 10E-1, 1, 10, 100]
+    gamma_values = [10E-3, 10E-2, 10E-1, 1, 10, 100] #γ = 1/(2σ)^2 in the RBF documentation 
     alpha, gamma = cross_evaluate_krr(X, y, alpha_values, gamma_values)
 
     '''The data points will be the A[r] after normalization as well as w(theta)
@@ -185,5 +215,11 @@ if __name__ == '__main__':
     model = KernelRidge(alpha=alpha, kernel='rbf', gamma=gamma)
     model.fit(X, y)
 
+    '''Now a test of gradient descent'''
+    init_r = generate_data(return_ellipse(2, 3), n=21, feature='fourier')
+    r_result = perform_gradient_descent(init_r, penalty_func, grad_penalty_krr_fourier, 3200, (model, 5, area_fourier), eps=10E-5, produce_graph=True)
+    r_series = fourier_series(r_result)
 
-            
+    t = np.linspace(0, 2*np.pi, 300)
+    plt.polar(t, r_series(t))
+    plt.show()
