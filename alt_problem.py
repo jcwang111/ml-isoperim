@@ -23,6 +23,9 @@ def area(r):
 def reg_area(r, r_prime, w):
     return area(r) / perim(r, r_prime, w)**2
 
+def reg_perim(r, r_prime, w):
+    return perim(r, r_prime, w)**2 / np.sqrt(area(r))
+
 def el_diffq(w, w_prime, mu=1):
     '''Generates and returns the expanded
     Euler-Lagrange differential

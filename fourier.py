@@ -72,6 +72,29 @@ def fourier_series(coeff_array, complex = False):
             return result
     return np.vectorize(y)
 
+def fourier_deriv(coeff_array, complex = False):
+    '''Uses an array of coefficients, in the form as returned by fourier_coeffs, and
+        returns a function of t'''
+    n = coeff_array.shape[0] // 2
+    #print(n)
+
+    a_k = coeff_array[:n+1]
+    b_k = coeff_array[n+1:]
+    #print(a_k, b_k)
+    if not complex:
+        def y_i(t):
+            result = 0
+            result += np.sum([a_k[k]*(-k)*np.sin(k*t) for k in range (1,n+1)]) #cosine terms
+            result += np.sum([b_k[k-1]*k*np.cos(k*t) for k in range (1,n+1)]) #sine terms
+            return result
+    else:
+        def y_i(t):
+            result = 0
+            result += np.sum([a_k[k]*1j*k*np.exp(1j*k*t) for k in range (1,n+1)]) #exp(jkt) terms
+            result += np.sum([b_k[k-1]*(-1j)*k*np.exp(-1j*k*t) for k in range (1,n+1)]) #exp(-jkt) terms
+            return result
+    return np.vectorize(y_i)
+
 if __name__ == '__main__':
     """Some tests to make sure it's working correctly"""
     g = lambda x: 1+ np.cos(x) + np.sin(x)
