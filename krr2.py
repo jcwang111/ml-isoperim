@@ -8,6 +8,7 @@ import matplotlib.pyplot as plt
 from scipy.interpolate import CubicHermiteSpline
 import scipy
 from sklearn.kernel_ridge import KernelRidge
+from sklearn.model_selection import cross_val_score
 from sklearn.metrics.pairwise import rbf_kernel
 import itertools
 
@@ -62,25 +63,25 @@ def read_function(filename):
 
     return CubicHermiteSpline(t, y, dy, extrapolate='periodic')
 
-def generate_data(w, n=10, feature='fourier'):
-    '''Generates a data vector out of the weight function.
+def generate_data(f, n=10, feature='fourier'):
+    '''Generates a data vector out of the function.
     Args:
-        w: weight function for the area.
+        f: function to turn into a vector.
         n: length of feature vector. If feature=='fourier' and n is even,
             feature vector will be of length n+1. If feature='function', then
             has no effect (n will always be 1).
         feature: 'fourier', 'function', or 'points'. Decides how to
-            represent the w function. Defaults to 'fourier'.
+            represent the f function. Defaults to 'fourier'.
     Returns:
         y: numpy array of floats, shape (n,), or (n+1,) if feature=='fourier' and n is odd.'''
     
     if (feature == 'function'):
-        return np.array([w])
+        return np.array([f])
     elif (feature == 'points'):
         theta = np.linspace(0, 2*np.pi, n)
-        return w(theta)
+        return f(theta)
     elif (feature == 'fourier'):
-        return fourier_coeffs(weight, n= n//2)
+        return fourier_coeffs(f, n= n//2)
     else:
         raise ValueError("Invalid argument for feature: must be 'fourier', 'function', or 'points'.")
 
@@ -100,37 +101,89 @@ def cross_evaluate_krr(X, y, alpha_values, gamma_values):
     best_score = np.NINF #negative infinity
     for (alpha, gamma) in itertools.product(alpha_values, gamma_values):
         model = KernelRidge(alpha=alpha, kernel='rbf', gamma=gamma)
-        score = model.score(X, y)
+        score = cross_val_score(model, X, y, cv=4).mean()
         if score > best_score:
             best_alpha, best_gamma = alpha, gamma
             best_score = score
+    
+    return best_alpha, best_gamma
         
 
-def grad_krr(r, model)
+def grad_krr(r, model):
+    '''Returns the gradient of the KRR model.
+    Args:
+        r: input vector
+        model: trained KRR model with RBF kernel'''
+    X = model.X_fit_
+    alpha = model.dual_coefs_
+    gamma =  model.get_params['gamma']
+    K = rbf_kernel(r.reshape(1,-1), X, gamma)
+    
+    result = np.zeros(r.shape)
+    for i in range(X.shape[0]):
+        result += alpha[i]*2*gamma*(X[i,:]-r)*K[0,i]
+    
+    return result
+
+def area_fourier(r):
+    '''Takes a vector of Fourier coefficients of
+    a polar curve and returns the area under it.'''
+    return np.pi*r[0]**2 + np.pi/2 * r[1:]@r[1:]
+
+def grad_area_fourier(r, model):
+    '''Gradient of the area with respect to a vector
+    of the Fourier coefficients of r'''
+    grad = np.pi * r
+    grad[0] = 2*grad[0]
+    return grad
+
+def penalty_func(r, model, p, area_func, A_0=1):
+    '''Function that penalizes perimeter and deviation
+    from the desired area A_0.
+    Args:
+        r: input vector, shape (m,)
+        model: trained KRR model, P_ML[r]
+        p: parameter, how much to penalize deviation from the area
+        area_func: function that takes in r and returns the area
+        A_0: desired area
+    Returns:
+        cost: float, to be minimized to solve the problem.'''
+    
+    return model.predict(r.reshape(1,-1))[0] + p*(area_func(r)-A_0)**2
+
+def grad_penalty_krr_fourier(r, model, p, area_func, A_0=1):
+    '''Gradient of penalty_func() with respect to r.'''
+    return grad_krr(r, model) + 2*p*(area_func(r)-A_0)*grad_area_fourier(r,model)
 
 if __name__ == '__main__':
     scipy.special.seterr(all='raise')
 
     #Let's first try a data set of the first 21 sine-cosine Fourier coefficients, for various ellipses
-    n = 9 #Number of feature vectors; rows of X
     m = 21 #Length of each feature vector; columns of X
     p = 1 #Number of dependent variables
 
+    param_list = [1, 4/3, 5/3, 2, 4, 5]
+    n = len(param_list)**2 #number of feature vectors; rows of X
+
     X = np.zeros((n, m)) #Contains feature vectors
-    Y = np.zeros((n, p)) #Values of P[r,w], dependent variables
+    y = np.zeros(n) #Values of P[r,w], dependent variables
 
-    i = 0 #current index
+    weight = return_ellipse(2, 5)
+    for (i, (a, b)) in enumerate(itertools.product(param_list, param_list)):
+        print(i, a, b)
+        r_func = return_ellipse(a, b)
+        r_func_d1 = return_ellipse_d1(a, b)
+        X[i,:] = generate_data(r_func, n=21, feature='fourier')
+        y[i] = perim(r_func, r_func_d1, weight)
 
-    for a,b in [(3,4), (1,1), (2,5), (1,10), (2,1), (5,7)]:
-        weight = weight_reg(ellipse_reg, ellipse_reg_d1, ellipse_reg_d2, a, b)
-        X[i,:] = generate_data(weight, m, 'fourier')
-        Y[i, 0] = reg_area(ellipse_reg, ellipse_reg_d1, weight, a, b)
-        i += 1
+    alpha_values = [0, 10E-3, 10E-2, 10E-1, 1, 10, 100, 1000]
+    gamma_values = [10E-3, 10E-2, 10E-1, 1, 10, 100]
+    alpha, gamma = cross_evaluate_krr(X, y, alpha_values, gamma_values)
 
     '''The data points will be the A[r] after normalization as well as w(theta)
     in some representation.'''
-    model = KernelRidge(kernel='rbf', gamma=1.0)
-    model.fit(X, Y)
+    model = KernelRidge(alpha=alpha, kernel='rbf', gamma=gamma)
+    model.fit(X, y)
 
 
             

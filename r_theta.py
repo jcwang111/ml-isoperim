@@ -26,6 +26,16 @@ def ellipse_d1(theta, a, b):
 
     return (-1/2)*a*b*(a**2-b**2)*np.sin(2*theta)*( (b*np.cos(theta))**2 + (a*np.sin(theta))**2 )**(-3/2)
 
+def return_ellipse(a, b):
+    def r(theta):
+        return a*b/( (a*np.sin(theta))**2 + (b*np.cos(theta))**2 )**(1/2)
+    return r
+
+def return_ellipse_d1(a, b):
+    def r_i(theta):
+        return (-1/2)*a*b*(a**2-b**2)*np.sin(2*theta)*( (b*np.cos(theta))**2 + (a*np.sin(theta))**2 )**(-3/2)
+    return r_i
+
 def smooth_curve(theta, n, epsilon, r):
     '''Polar function for a smooth curve with an oscillating boundary
 
