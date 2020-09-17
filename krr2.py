@@ -10,25 +10,18 @@ import scipy
 from sklearn.kernel_ridge import KernelRidge
 from sklearn.model_selection import cross_val_score
 from sklearn.metrics.pairwise import rbf_kernel
+from sklearn.decomposition import PCA, KernelPCA
+from sklearn.kernel_approximation import RBFSampler, Nystroem
 import itertools
+import numdifftools
 
 from r_theta import *
 from fourier import *
 from alt_problem import perim, area, reg_perim
 
-def L2_norm(r_i, r_j):
-    '''Currently unused.
-    The L2 norm of functions r_i and r_j, with the interval of
-    integration between 0 to 2pi.
-    Args:
-        r_i, r_j: Function inputs.
-    Returns:
-        norm: The inner product of the two arguments,
-            from 0 to 2pi'''
-    return integrate(lambda t:r_i(t)*r_j(t)) #integrates from 0 to 2pi
-
 def diff_norm_kernel(l=1.0):
-    '''Returns Gaussian of the L2 norm of the difference of two functions,
+    '''Currently unused.
+    Returns Gaussian of the L2 norm of the difference of two functions,
     if we want to use the entire functions instead of
     basis function coefficients.
     Args:
@@ -128,14 +121,13 @@ def grad_krr(r, model):
 def area_fourier(r):
     '''Takes a vector of Fourier coefficients of
     a polar curve and returns the area under it.'''
-    return np.pi*r[0]**2 + np.pi/2 * r[1:]@r[1:]
+    #r[0] is already twice the actual constant term
+    return np.pi/4 * r[0]**2 * np.pi/2 * r[1:]@r[1:]
 
-def grad_area_fourier(r, model):
+def grad_area_fourier(r):
     '''Gradient of the area with respect to a vector
     of the Fourier coefficients of r'''
-    grad = np.pi * r
-    grad[0] = 2*grad[0]
-    return grad
+    return np.pi * r
 
 def penalty_func(r, model, p, area_func, A_0=1):
     '''Function that penalizes perimeter and deviation
@@ -153,7 +145,7 @@ def penalty_func(r, model, p, area_func, A_0=1):
 
 def grad_penalty_krr_fourier(r, model, p, area_func, A_0=1):
     '''Gradient of penalty_func() with respect to r.'''
-    return grad_krr(r, model) + 2*p*(area_func(r)-A_0)*grad_area_fourier(r,model)
+    return grad_krr(r, model) + 2*p*(area_func(r)-A_0)*grad_area_fourier(r)
 
 def perform_gradient_descent(init_guess, cost, cost_grad, n, args, eps=1.0, produce_graph=False):
     '''Implements a naive gradient descent on the cost function.
@@ -186,6 +178,61 @@ def perform_gradient_descent(init_guess, cost, cost_grad, n, args, eps=1.0, prod
     
     return result
 
+def kPCA_grad_descent_krr_fourier(init_guess, model, steps, eps):
+    '''Performs kPCA and the gradient descent on the
+    KRR model that uses fourier coefficients as feature
+    vectors, doing
+    something like the non-linear gradient denoising described
+    in the paper.
+    Args:
+        init_guess: vector, initial guess for r
+        model: trained KRR model
+        steps: no. of steps desired
+        eps: constant for gradient descent'''
+    k = None #no. of components to project onto
+    X = model.X_fit_
+    gamma =  model.get_params()['gamma']
+    rbf_feature = Nystroem(gamma = gamma)
+    rbf_feature.fit(X)
+    kpca = KernelPCA(n_components = k, kernel='rbf', gamma=gamma, remove_zero_eig=True, fit_inverse_transform=True)
+    kpca.fit(X)
+
+    def magnitude(v):
+        '''Magnitude of a vector'''
+        return np.sqrt(v@v)
+
+    def p_q(r):
+        '''Kernel projection error function'''
+        r_diff = rbf_feature.transform(r.reshape(1,-1)) - rbf_feature.transform(kpca.inverse_transform(kpca.transform(r.reshape(1,-1))))
+        return magnitude(r_diff.ravel())
+
+    H = numdifftools.Hessian(p_q)
+    
+    m = init_guess.shape[0]
+    d = m // 2 #no. of eigenvectors from the Hessian of p_q to take as the tangent space
+
+    def P_T(r):
+        '''Projection onto the tangent'''
+        eigenValues, eigenVectors = np.linalg.eig(H(r))
+        idx = eigenValues.argsort()[:d]
+        #eigenValues = eigenValues[idx]
+        U = eigenVectors
+        print(U.shape)
+        T_M_basis = eigenVectors[:,idx] #first d eigvectors, basis for the tangent space
+        return U@U, T_M_basis.T #Projection matrix, Tangent space projection
+
+    result = init_guess
+    for _ in range(steps):
+        P, T = P_T(result)
+        #projection step
+        gradP = grad_krr(result, model)
+        print(gradP.shape)
+        result -= eps * P@gradP/magnitude(gradP)
+        #correction step
+        result = T@result
+
+    return result
+
 if __name__ == '__main__':
     scipy.special.seterr(all='raise')
 
@@ -215,11 +262,44 @@ if __name__ == '__main__':
     model = KernelRidge(alpha=alpha, kernel='rbf', gamma=gamma)
     model.fit(X, y)
 
+    """'''test the model'''
+    test_param_list = [1.1, 1.4, 1.7, 3, 6]
+    n_test = len(test_param_list)**2 #number of feature vectors; rows of X
+
+    X_test = np.zeros((n_test, m)) #Contains feature vectors
+    y_exact_test = np.zeros(n_test) #Values of P[r,w], dependent variables
+
+    for (i, (a, b)) in enumerate(itertools.product(test_param_list, test_param_list)):
+        r_func = return_ellipse(a, b)
+        r_func_d1 = return_ellipse_d1(a, b)
+        X_test[i,:] = generate_data(r_func, n=21, feature='fourier')
+        y_exact_test[i] = perim(r_func, r_func_d1, weight)
+
+    y_test = model.predict(X_test)
+    plt.plot(y_exact_test, 'x', label='Exact values')
+    plt.plot(y_test, '+', label='Predicted values')
+    plt.legend()
+    #plt.savefig('sep15_perim_comparisons.png')
+    plt.show()
+
     '''Now a test of gradient descent'''
     init_r = generate_data(return_ellipse(2, 3), n=21, feature='fourier')
     r_result = perform_gradient_descent(init_r, penalty_func, grad_penalty_krr_fourier, 3200, (model, 5, area_fourier), eps=10E-5, produce_graph=True)
     r_series = fourier_series(r_result)
 
     t = np.linspace(0, 2*np.pi, 300)
-    plt.polar(t, r_series(t))
+    plt.polar(t, r_series(t),label="First attempt at minimization for A[r]=1")
+    #plt.savefig('sep14_test1.png')
+    plt.show()"""
+
+    '''Now for gradient descent with PCA part'''
+    init_r = generate_data(return_ellipse(2, 3), n=21, feature='fourier')
+    r_result = kPCA_grad_descent_krr_fourier(init_r, model, 1600, 10E-5)
+    r_series = fourier_series(r_result)
+
+    t = np.linspace(0, 2*np.pi, 300)
+    plt.polar(t, r_series(t),label="Attempt minimization with PCA gradient correction for A[r]=1")
+    #plt.savefig('sep14_test1.png')
     plt.show()
+    '''Results: stuck at np.linalg.eig(H(r)), which is supposed to find the eigenvalues of the
+    Hessian. It says something about a mismatch between dimensions 10 and 21

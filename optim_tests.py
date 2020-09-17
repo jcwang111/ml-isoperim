@@ -42,13 +42,13 @@ def cvxpy_test(wfunc):
     #dr = (r[1:] - r[:-1])
 
     # Construct Optimization Problem
-    objective =  1/2 * cp.sum(r**2)*dt #Area integral
+    objective =  -1/2 * cp.sum(r**2)*dt #Area integral
     constraints = [
         r[0] == r[-1],
         cp.sum(cp.sqrt(r[:-1]**2 + ((r[1:] - r[:-1])/dt)**2))*dt <= L, #perimeter integral
     ]
 
-    prob = cp.Problem(cp.Maximize(objective), constraints)
+    prob = cp.Problem(cp.Minimize(objective), constraints)
 
     # Solve Problem
     prob.solve(verbose=True)
@@ -82,5 +82,5 @@ def pyomo_test(wfunc):
     model.display()
 
 if __name__ == '__main__':
-    #cvxpy_test(lambda t: 1)
+    cvxpy_test(lambda t: 1)
     #pyomo_test(None)
