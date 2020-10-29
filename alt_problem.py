@@ -80,22 +80,22 @@ if __name__ == '__main__':
   def constant_w_prime(t):
     return 0
   
+  '''
   third_weight = weight_function(third_reg, third_reg_d1, third_reg_d2)
 
   a, b = 2, 5
   ellipse_weight = weight_function(return_ellipse_reg(a,b), return_ellipse_reg_d1(a,b), return_ellipse_reg_d2(a, b))
   ellipse_weight_d1 = weight_d1(return_ellipse_reg(a,b), return_ellipse_reg_d1(a,b), return_ellipse_reg_d2(a, b), return_ellipse_reg_d3(a,b))
-
+  '''
   #Use the solver
-
-  diffeq = el_diffq(ellipse_weight, ellipse_weight_d1, 1)
+  diffeq = el_diffq(return_ellipse(2,5), return_ellipse_d1(2,5), 1)
   dt = 0.01
-  sol, t = MIRK(diffeq, periodic_bc, [1/ellipse_weight(0),0], (0.0, 2*np.pi), dt, endpoint_bc=True)
-  check_EL_eq(ellipse_weight, ellipse_weight_d1, t, sol)
+  sol, t = MIRK(diffeq, periodic_bc, [1/ellipse(0,2,5),0], (0.0, 2*np.pi), dt, endpoint_bc=True)
+  #check_EL_eq(ellipse_weight, ellipse_weight_d1, t, sol)
   #print(sol[0,:])
-  plt.polar(t, -sol[0,:], label='r(θ) produced by the solver, Δt={}'.format(dt))
+  plt.polar(t, sol[0,:], label=r'$r(\theta)$ produced by MIRK solver, $\Delta t=0.01$')
   #plt.polar(t+(sol[0,:]<0)*np.pi, np.abs(sol[0,:]))
   #plt.polar(t, ellipse_weight(t), label='w(θ) used')
-  #plt.legend()
-  #plt.savefig('neg_test_ellipse_problem_dt{}.png'.format(dt), bbox='tight')
+  plt.legend()
+  plt.savefig('test_ellipse_problem_dt{}.png'.format(dt), bbox_inches='tight')
   plt.show()

@@ -26,6 +26,12 @@ def ellipse_d1(theta, a, b):
 
     return (-1/2)*a*b*(a**2-b**2)*np.sin(2*theta)*( (b*np.cos(theta))**2 + (a*np.sin(theta))**2 )**(-3/2)
 
+def ellipse_d2(theta, a, b):
+    '''second derivative of r(theta) with respect to theta for the ellipse'''
+    c = ( (b*np.cos(theta))**2 + (a*np.sin(theta))**2 ) # b^2cos^2(th) + a^2sin^2(th)
+    radius = (-1)*a*b*(a**2-b**2)*np.cos(2*theta)* c**(-3/2) + (3/4)*a*b*(a**2-b**2)**2 * (np.sin(2*theta))**2 * c**(-5/2)
+    return radius
+
 def return_ellipse(a, b):
     def r(theta):
         return a*b/( (a*np.sin(theta))**2 + (b*np.cos(theta))**2 )**(1/2)

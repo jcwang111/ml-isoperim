@@ -65,13 +65,12 @@ def plot_varied_ellipse():
     
     new_weight= weight_reg(q, q_i, q_ii)
     th = np.linspace(0, 2*np.pi, 628)
-    plt.polar(th, rp(th), label='Original Ellipse r(θ), a=2 b=5')
-    plt.polar(th, rq(th), label='r(θ) + 0.1sin(θ)')
+    plt.polar(th, rp(th), label=r'Original Ellipse $r(\theta), a=2, b=5$')
+    plt.polar(th, rq(th), label=r'$r(\theta) + 0.1\sin(\theta)$', color='green')
     #plt.polar(th, w(th), label = 'w(θ), the weight function', linestyle='dashed')
     #plt.polar(th, new_weight(th), label='Weight derived from q(θ)')
     #print('Area of q(θ) under its supposedly maximum weight:', area(rq, new_weight))
     plt.legend()
-    plt.show()
 
 def alt_vary_r_and_check_area(r_, r_i, w):
     '''Varies r(theta) and checks the new area.
@@ -236,6 +235,8 @@ def sep2_tests_r_prime_perim_known_r(r_, r_i, w):
             #new_new_r_i = lambda t: new_r_i(t) / np.sqrt(perimeter)
             #print(' Actual regularized perimeter:', perim_3(new_new_r_i, w))
 
+plot_varied_ellipse()
+plt.savefig('fig7.png', bbox_inches='tight')
 if __name__ == '__main__':
     a, b  = 2, 5
     #ellipse_weight = weight_reg(ellipse_reg, ellipse_reg_d1, ellipse_reg_d2, a, b)
@@ -278,4 +279,4 @@ if __name__ == '__main__':
     #under original test, fails for rotations
 
     ####
-    sep2_tests_r_prime_perim_known_r(lambda t:np.sin(t) + np.cos(t), lambda t:np.cos(t) - np.sin(t), lambda t: 1)
+    #sep2_tests_r_prime_perim_known_r(lambda t:np.sin(t) + np.cos(t), lambda t:np.cos(t) - np.sin(t), lambda t: 1)

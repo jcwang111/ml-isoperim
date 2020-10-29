@@ -122,10 +122,10 @@ function sol_check(sol)
     return weight_function(r_, r_i, r_ii) 
 end
 
-function main()
+#function main()
 
     n, eps, r0 = 8, 0.01, 1
-    a, b = 2,1
+    a, b = 2,5
     
     s_r = [smooth_reg(n, eps, r0), smooth_reg_d1(n, eps, r0), smooth_reg_d2(n, eps, r0)]
     e_r = [ellipse_reg(a,b), ellipse_reg_d1(a,b), ellipse_reg_d2(a,b)]
@@ -139,16 +139,23 @@ function main()
 
     t = 0:0.008:2π
     
-    @time p,sol = el_bvp_plot(ellipse_weight, 1, r0_est_1(ellipse_weight), "Solver Result", 0.005)
-    plot!(p, t, e_r[1].(t), ls=:dash, lw=2)
-    print(area_reg(e_r[1], e_r[2], ellipse_weight))
-    #check_weight = sol_check(sol)
-    #check_weight_reg_factor = integrate(check_weight)
-    #plot!(p, t, check_weight.(t)./check_weight_reg_factor, ls=:dash, lw=2)
-    #plot!(p, t, ellipse_weight.(t))
+    r_eps(t) = e_r[1](t) + 0.1*sin(t)
+    r_eps_d1(t) = e_r[2](t) + 0.1*cos(t)
+    r_eps_d2(t) = e_r[3](t) - 0.1*sin(t)
+
+    w_eps = weight_reg(r_eps, r_eps_d1, r_eps_d2)
+
+    println("Starting")
+    @time p,sol = el_bvp_plot(w_eps, 1, r0_est_1(w_eps), "Solver Result", 0.02)
+    plot!(p, t, r_eps.(t), ls=:dash, lw=2, label="Exact r_ε(θ) = ellipse + 0.1sin(θ)")
+    #print(area_reg(e_r[1], e_r[2], ellipse_weight))
+    check_weight = sol_check(sol)
+    check_weight_reg_factor = integrate(check_weight)
+    plot!(p, t, check_weight.(t)./check_weight_reg_factor, ls=:dash, lw=2)
+    plot!(p, t, w_eps.(t), label="w(θ) for this case")
     
     #write_sol(sol, "cos_sol.txt")
     #print(check_weight.(sol.t))
     display(p)
-    #savefig(string("w_is_cos_check_weight.png"))
-end
+    savefig(string("oct25_a.png"))
+#end

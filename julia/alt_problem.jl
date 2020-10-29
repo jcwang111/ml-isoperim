@@ -138,7 +138,7 @@ function check_EL_eq_general(w, w_prime, r, r_i, r_ii)
     return p
 end
 
-function main()
+#function main()
 
     n, eps, r0 = 8, 0.01, 1
     a, b = 2,5
@@ -156,15 +156,15 @@ function main()
     ellipse_weight_d1 = weight_d1(e_r..., ellipse_reg_d3(a,b))
     t = 0:0.008:2π
     
-    @time p,sol = el_bvp_plot(ellipse_weight, ellipse_weight_d1, 1, r0_est_1(ellipse_weight), "Solver result for r(θ)", 0.002)
+    @time p,sol = el_bvp_plot(ellipse_reg(a,b), ellipse_reg_d1(a,b), 1, r0_est_1(ellipse_reg(a,b)), "Solver result for r(θ)", 0.02)
     #savefig(string("dt_0_01_ellipse_w_plot.png"))
-    e = check_EL_eq(ellipse_weight, ellipse_weight_d1, sol)
+    #e = check_EL_eq(ellipse_weight, ellipse_weight_d1, sol)
     println(sol)
 
-    #display(p)
-    display(e)
-    savefig("residual.png")
-    r(t) = sol(t, idxs=1)[1]
-    r_i(t) = sol(t, idxs=2)[1]
-    vary_r_and_check_area(r, r_i, ellipse_weight)
-end
+    display(p)
+    #display(e)
+    #savefig("residual.png")
+    #r(t) = sol(t, idxs=1)[1]
+    #r_i(t) = sol(t, idxs=2)[1]
+    #vary_r_and_check_area(r, r_i, ellipse_weight)
+#end

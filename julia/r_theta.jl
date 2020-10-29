@@ -44,8 +44,8 @@ function integrate(r::Function, args...)
 
   #handwritten rectangle summing
   
-  #step = 0.01
-  #return(step * sum(t->r(t, args...), 0:step:2π))
+  step = 0.01
+  return(step * sum(t->r(t, args...), 0:step:2π))
   
 end
 
