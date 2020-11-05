@@ -56,7 +56,7 @@ def modified_gd_test(model):
 
 def NLGD_test(model):
     init_r = generate_data(return_ellipse(2, 2), n=21, feature='fourier')
-    r_result = NLGD_krr_fourier(init_r, model, 75, 10E-5)
+    r_result = NLGD_krr_fourier(init_r, model, 25, 10E-3)
     r_series = fourier_series(r_result)
 
     t = np.linspace(0, 2*np.pi, 300)
@@ -98,11 +98,11 @@ if __name__ == '__main__':
     model = KernelRidge(alpha=alpha, kernel='rbf', gamma=gamma)
     model.fit(X, y)
 
-    #accuracy_test(model, m)
+    accuracy_test(model, m)
     #grad_descent_test(model)
     #modified_gd_test(model)
 
     '''Try NLGD'''
-    NLGD_test(model)
+    #NLGD_test(model)
     '''Results: for NLGD, stuck at np.linalg.eig(H(r)), which is supposed to find the eigenvalues of the
     Hessian. It says something about a mismatch between dimensions 10 and 21'''

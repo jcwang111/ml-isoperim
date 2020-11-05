@@ -58,3 +58,7 @@ def reg_area(r, r_prime, w):
   #For perimeter to be 1, r(theta) must be divided by the current perimeter. Since we have
   # r^2(theta) in A[r], we can simply divide the original A[r] by P^2
   return 0.5 * integrate_quad(lambda t : r(t)**2 * w(t)) / perim(r, r_prime)**2
+
+def reg_perim(r, r_prime, w):
+  '''Return the perimeter after regularizing the weighted area to be 1.'''
+  return perim(r, r_prime) / np.sqrt(area(r, w))
