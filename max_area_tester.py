@@ -1,7 +1,7 @@
-'''This file runs a few tests, varying the curve of r(theta) a bit
+"""This file runs a few tests, varying the curve of r(theta) a bit
 to test if it really is the curve enclosing the largest area with
 its given perimeter. Of course, this test does not prove anything,
-but only may serve to give some information about them.'''
+but only may serve to give some information about them."""
 
 import numpy as np
 import matplotlib.pyplot as plt
@@ -10,12 +10,12 @@ from r_theta import *
 from functionals import *
 
 def vary_r_and_check_area(r_, r_i, w):
-    '''Varies r(theta) and checks the new area.
+    """Varies r(theta) and checks the new area.
     The area from the exact r should be greater
     than any of the varied r's.
     Args:
         r_, r_i: r(theta) and first derivative
-        w: weight function for the area'''
+        w: weight function for the area"""
     exact_area = reg_area(r_, r_i, w)
     print('Exact area:', exact_area)
     #rotate
@@ -73,13 +73,13 @@ def plot_varied_ellipse():
     plt.legend()
 
 def alt_vary_r_and_check_area(r_, r_i, w):
-    '''Varies r(theta) and checks the new area.
+    """Varies r(theta) and checks the new area.
     The area from the exact r should be greater
     than any of the varied r's. For the alternate
     problem, with P[r,w].
     Args:
         r_, r_i: r(theta) and first derivative
-        w: weight function for the area'''
+        w: weight function for the area"""
     from alt_problem import area, perim, reg_area
 
     exact_area = reg_area(r_, r_i, w)
@@ -240,7 +240,7 @@ plt.savefig('fig7.png', bbox_inches='tight')
 if __name__ == '__main__':
     a, b  = 2, 5
     #ellipse_weight = weight_reg(ellipse_reg, ellipse_reg_d1, ellipse_reg_d2, a, b)
-    '''can use integrate or integrate_quad in functionals.py'''
+    """can use integrate or integrate_quad in functionals.py"""
     #Ellipse: failed test, a=2 b=5
     #vary_r_and_check_area(ellipse_reg, ellipse_reg_d1, ellipse_weight, a, b)
     #Circle: succeeded test
@@ -256,7 +256,7 @@ if __name__ == '__main__':
     #fourth_weight = weight_reg(fourth_reg, fourth_reg_d1, fourth_reg_d2)
     #vary_r_and_check_area(fourth_reg, fourth_reg_d1, fourth_weight)
     #plot_varied_ellipse()
-    '''Tests for P_loc, September 2'''
+    """Tests for P_loc, September 2"""
     ###Since for P_loc we get w(t)=r(t) from the Euler-Lagrange, we just
     # need to provide any curve and its derivative, and vary it.
     # We might as well confirm that it for sure doesn't solve the actual problem, though.
