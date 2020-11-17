@@ -33,7 +33,7 @@ def accuracy_test(model, m):
     
 def NLGD_test(model, m, area_weight_func):
     init_r = generate_data(return_ellipse(2, 2), n=m, feature='fourier').reshape(1,-1)
-    r_result = NLGD_krr_fourier(init_r, model, 20, 0.05, area_weight_func).reshape(-1)
+    r_result = NLGD_krr_fourier(init_r, model, 50, 1, area_weight_func).reshape(-1)
     print("Final Result for r:", r_result)
     r_series = fourier_series(r_result)
 

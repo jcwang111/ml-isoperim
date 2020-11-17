@@ -129,8 +129,6 @@ if __name__ == '__main__':
         Y[i,0] = reg_area(r, lambda t:r(t,nu=1), weight)
         i += 1
 
-    '''The data points will be the A[r] after normalization as well as w(theta)
-    in some representation.'''
     model = KernelRidge(kernel='rbf', gamma=1.0)
     model.fit(X, Y)
 

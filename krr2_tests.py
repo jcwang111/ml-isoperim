@@ -25,6 +25,8 @@ def accuracy_test(model, m):
     y_test = model.predict(X_test)
     plt.plot(y_exact_test, 'x', label='Exact values')
     plt.plot(y_test, '+', label='Predicted values')
+    plt.xlabel("Test case number")
+    plt.ylabel("Perimeter")
     plt.legend()
     #plt.savefig('sep15_perim_comparisons.png')
     plt.show()
@@ -93,8 +95,6 @@ if __name__ == '__main__':
     gamma_values = [10E-3, 10E-2, 10E-1, 1, 10, 100] #γ = 1/(2σ)^2 in the RBF documentation 
     alpha, gamma = cross_evaluate_krr(X, y, alpha_values, gamma_values)
 
-    '''The data points will be the A[r] after normalization as well as w(theta)
-    in some representation.'''
     model = KernelRidge(alpha=alpha, kernel='rbf', gamma=gamma)
     model.fit(X, y)
 

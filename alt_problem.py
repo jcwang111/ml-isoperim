@@ -7,7 +7,7 @@ from scipy.integrate import quad
 from scipy.interpolate import CubicHermiteSpline
 
 from r_theta import *
-from mirk import MIRK
+from MIRK4 import MIRK
 
 def integrate_quad(r):
     '''integral from 0 to 2pi of the given function times dtheta

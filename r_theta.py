@@ -4,7 +4,6 @@
 import numpy as np
 import matplotlib
 import matplotlib.pyplot as plt
-import random
 from scipy.integrate import quad
 
 def ellipse(theta, a, b):
